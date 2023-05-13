@@ -1,7 +1,7 @@
 /**
  * src/App.js
- * 
- * This file contains the primary business logic and UI code for the Postboard 
+ *
+ * This file contains the primary business logic and UI code for the Postboard
  * application.
  */
 import React, { useState, useEffect } from 'react'
@@ -65,24 +65,24 @@ const App = () => {
       }
       // Now, we start a loading bar while the post is being sent.
       setCreateLoading(true)
-    
+
       // Get the author's identity key
       const identityKey = await getPublicKey({ identityKey: true })
 
       // Here's the part where we create the new Bitcoin token.
-      // This uses a library called PushDrop, which lets you attach data 
-      // payloads to Bitcoin token outputs. Then, you can redeem / unlock the 
+      // This uses a library called PushDrop, which lets you attach data
+      // payloads to Bitcoin token outputs. Then, you can redeem / unlock the
       // tokens later.
       const bitcoinOutputScript = await pushdrop.create({
         fields: [ // The "fields" are the data payload to attach to the token.
-          // For more info on these fields, look at the Postboard protocol document 
-          // (PROTOCOL.md). Note that the PushDrop library handles the public 
+          // For more info on these fields, look at the Postboard protocol document
+          // (PROTOCOL.md). Note that the PushDrop library handles the public
           // key, signature, and OP_DROP fields automatically.
           Buffer.from(POSTBOARD_PREFIX), // Postboard protocol namespace prefix
           Buffer.from(identityKey, 'hex'),
-          Buffer.from(postText)    // Postboard post content
+          Buffer.from(postText) // Postboard post content
         ],
-        // The same "postboard" protocol and key ID can be used to sign and 
+        // The same "postboard" protocol and key ID can be used to sign and
         // lock this new Bitcoin PushDrop token.
         protocolID: 'postboard',
         keyID: '1',
@@ -90,27 +90,27 @@ const App = () => {
         ownedByCreator: true
       })
 
-      // Now that we have the output script for our Postboard Bitcoin token, we can 
-      // add it to a Bitcoin transaction (a.k.a. "Action"), and register the 
-      // new token with the blockchain. On the MetaNet, Actions are anything 
-      // that a user does, and all Actions take the form of Bitcoin 
+      // Now that we have the output script for our Postboard Bitcoin token, we can
+      // add it to a Bitcoin transaction (a.k.a. "Action"), and register the
+      // new token with the blockchain. On the MetaNet, Actions are anything
+      // that a user does, and all Actions take the form of Bitcoin
       // transactions.
       const newPostboardToken = await createAction({
-        // This Bitcoin transaction ("Action" with a capital A) has one output, 
-        // because it has led to the creation of a new Bitcoin token. The token 
+        // This Bitcoin transaction ("Action" with a capital A) has one output,
+        // because it has led to the creation of a new Bitcoin token. The token
         // that gets created represents our new postboard item.
         outputs: [{
-          // The output amount is how much Bitcoin (measured in "satoshis") 
-          // this token is worth. We use the value that the user entered in the 
+          // The output amount is how much Bitcoin (measured in "satoshis")
+          // this token is worth. We use the value that the user entered in the
           // dialog box.
           satoshis: Number(1),
-          // The output script for this token was created by PushDrop library, 
+          // The output script for this token was created by PushDrop library,
           // which you can see above.
           script: bitcoinOutputScript,
           // Lastly, we should describe this output for the user.
           description: 'New Postboard post'
         }],
-        // Describe the Actions that your app facilitates, in the present 
+        // Describe the Actions that your app facilitates, in the present
         // tense, for the user's future reference.
         description: 'Create a Postboard post'
       })
@@ -131,7 +131,7 @@ const App = () => {
 
       // ---------------------------------------------------------------------
 
-      // Now, we just let the user know the good news! Their token has been 
+      // Now, we just let the user know the good news! Their token has been
       // created, and added to the board.
       toast.dark('Post successfully created!')
       setPosts(originalPosts => ([
@@ -163,11 +163,11 @@ const App = () => {
   const handleTipSubmit = async e => {
   //   e.preventDefault()
 
-  //   await tokenator.sendPayment({
-  //       recipient: selectedPost.identityKey,
-  //       amount: tipAmount
-  //   })
-    
+    //   await tokenator.sendPayment({
+    //       recipient: selectedPost.identityKey,
+    //       amount: tipAmount
+    //   })
+
   //   toast.success('Tip sent!')
   //   setTippingOpen(false)
   }
@@ -183,7 +183,7 @@ const App = () => {
         // Use Confederacy Postboard lookup service
 
         // TODO: UNCOMMENT CODE BELOW ---------------------------------------------
-        
+
         // const response = await PacketPay(`${confederacyHost}/lookup`, {
         //   method: 'POST',
         //   body: {
@@ -192,7 +192,7 @@ const App = () => {
         //   }
         // })
         // const lookupResult = JSON.parse(Buffer.from(response.body).toString('utf8'))
-        
+
         // ------------------------------------------------------------------------
 
         // Check for any errors returned and create error to notify bugsnag.
@@ -205,44 +205,43 @@ const App = () => {
         const decodedResults = []
 
         // Decode the Postboard token fields
-          for (let i = 0; i < lookupResult.length; i++) {
-            const decoded = pushdrop.decode({
-              script: lookupResult[i].outputScript,
-              fieldFormat: 'buffer'
-            })
-            // Validate key linkage
-            // We need to make sure the identity key of the author can be attributed
-            // to the locking key associated with the pushdrop token
-            // decoded.fields[1] and decoded.lockingPublicKey
-            const expected = getPaymentAddress({
-              senderPrivateKey: '0000000000000000000000000000000000000000000000000000000000000001',
-              recipientPublicKey: decoded.fields[1].toString('hex'),
-              returnType: 'publicKey',
-              invoiceNumber: '2-postboard-1'
-            })
-            if (expected !== decoded.lockingPublicKey) {
-              continue
-            }
-
-            decodedResults.push({
-              post: decoded.fields[2].toString('utf8'),
-              identityKey: decoded.fields[1].toString('hex'),
-            })
+        for (let i = 0; i < lookupResult.length; i++) {
+          const decoded = pushdrop.decode({
+            script: lookupResult[i].outputScript,
+            fieldFormat: 'buffer'
+          })
+          // Validate key linkage
+          // We need to make sure the identity key of the author can be attributed
+          // to the locking key associated with the pushdrop token
+          // decoded.fields[1] and decoded.lockingPublicKey
+          const expected = getPaymentAddress({
+            senderPrivateKey: '0000000000000000000000000000000000000000000000000000000000000001',
+            recipientPublicKey: decoded.fields[1].toString('hex'),
+            returnType: 'publicKey',
+            invoiceNumber: '2-postboard-1'
+          })
+          if (expected !== decoded.lockingPublicKey) {
+            continue
           }
+
+          decodedResults.push({
+            post: decoded.fields[2].toString('utf8'),
+            identityKey: decoded.fields[1].toString('hex')
+          })
+        }
         setPosts(decodedResults)
 
         // Get the list of incoming payments to process
         const payments = await tokenator.listIncomingPayments()
-        
+
         for (const payment of payments) {
           console.log('processing', payment)
           await tokenator.acceptPayment(payment)
           toast.success(`Received a ${payment.token.amount} satoshi tip!`)
         }
-
       } catch (e) {
-        // Any larger errors are also handled. If these steps fail, maybe the 
-        // user didn't give our app the right permissions, and we couldn't use 
+        // Any larger errors are also handled. If these steps fail, maybe the
+        // user didn't give our app the right permissions, and we couldn't use
         // the "postboard" protocol.
         toast.error(`Failed to load posts! Does the app have permission? Error: ${e.message}`)
         console.error(e)
@@ -252,7 +251,7 @@ const App = () => {
     })()
   }, [])
 
-  // The rest of this file just contains some UI code. All the juicy 
+  // The rest of this file just contains some UI code. All the juicy
   // Bitcoin - related stuff is above.
 
   // ------------------------------------------------------
@@ -271,7 +270,7 @@ const App = () => {
       {/* here's the app title bar */}
       <AppBar>
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
             Postboard — Share thoughts!
           </Typography>
           <IconButton
@@ -320,7 +319,7 @@ const App = () => {
               </Card>
             ))}
           </List>
-        )}
+          )}
 
       {/* This is the dialog for creating a new task */}
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} fullWidth>
@@ -342,11 +341,11 @@ const App = () => {
           {createLoading
             ? <LinearProgress className={classes.loading_bar} />
             : (
-            <DialogActions>
-              <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-              <Button type='submit'>OK</Button>
-            </DialogActions>
-          )}
+              <DialogActions>
+                <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
+                <Button type='submit'>OK</Button>
+              </DialogActions>
+              )}
         </form>
       </Dialog>
 
@@ -370,11 +369,11 @@ const App = () => {
           {tipLoading
             ? <LinearProgress className={classes.loading_bar} />
             : (
-            <DialogActions>
-              <Button onClick={() => setTippingOpen(false)}>Cancel</Button>
-              <Button type='submit'>Send Tip</Button>
-            </DialogActions>
-          )}
+              <DialogActions>
+                <Button onClick={() => setTippingOpen(false)}>Cancel</Button>
+                <Button type='submit'>Send Tip</Button>
+              </DialogActions>
+              )}
         </form>
       </Dialog>
     </>

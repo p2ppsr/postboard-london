@@ -7,6 +7,9 @@ import App from './App'
  * Render the app wrapped in a Babbage React Prompt
  */
 ReactDOM.render(
+
+  // TODO: UNCOMMENT CODE BELOW -----------------------------------------------
+
   // <Prompt
   //   customPrompt
   //   supportedMetaNet='mainnet'
@@ -17,7 +20,9 @@ ReactDOM.render(
   //   description='Share your thoughts and earn!'
   // >
     <App />
-  // </Prompt>
+  //</Prompt>
+
+  // --------------------------------------------------------------------------
   ,
   document.getElementById('root')
 )
